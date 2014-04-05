@@ -1,9 +1,10 @@
 #ifndef __I_TYPE_H
 #define __I_TYPE_H
 
-#include ".\opcode.h"
-#include ".\vcpu.h"
-#include ".\valu.h"
+#include "./declaration_opcode.h"
+#include "./vcpu.h"
+#include "./valu.h"
+#include "./error_handler.h"
 
 typedef unsigned int u32;
 
@@ -37,52 +38,72 @@ static void emu_addi(void){
 static void emu_lw(void){
 	u32 rs = get_regs( ioperand.rs );
 	u32 immediate = alu_extend( ioperand.immediate, 16, 32 );
-	u32 value_to_be_stored = get_dMemory( rs+immediate );
+	u32 address = alu_add(rs,immediate);
+	if( address%4!=0 ){
+		error_report( ERROR_data_misaligned );
+	}
+	u32 value_to_be_stored = get_dMemory( address );
 	set_regs( ioperand.rt, value_to_be_stored );
 }
 static void emu_lh(void){
 	u32 rs = get_regs( ioperand.rs );
 	u32 immediate = alu_extend( ioperand.immediate, 16, 32 );
-	u32 value_to_be_stored = ( get_dMemory( rs+immediate ) & 0x0000FFFF );
+	u32 address = alu_add(rs,immediate);
+	if( address%4!=0 ){
+		error_report( ERROR_data_misaligned );
+	}
+	u32 value_to_be_stored = ( get_dMemory( address ) & 0x0000FFFF );
 	value_to_be_stored = alu_extend( value_to_be_stored, 16, 32 );
 	set_regs( ioperand.rt, value_to_be_stored );
 }
 static void emu_lhu(void){
 	u32 rs = get_regs( ioperand.rs );
 	u32 immediate = alu_extend( ioperand.immediate, 16, 32 );
-	u32 value_to_be_stored = ( get_dMemory( rs+immediate ) & 0x0000FFFF );
+	u32 address = alu_add(rs,immediate);
+	if( address%4!=0 ){
+		error_report( ERROR_data_misaligned );
+	}
+	u32 value_to_be_stored = ( get_dMemory( address ) & 0x0000FFFF );
 	set_regs( ioperand.rt, value_to_be_stored );
 }
 static void emu_lb(void){
 	u32 rs = get_regs( ioperand.rs );
 	u32 immediate = alu_extend( ioperand.immediate, 16, 32 );
-	u32 value_to_be_stored = ( get_dMemory( rs+immediate ) & 0x000000FF );
+	u32 value_to_be_stored = ( get_dMemory( alu_add(rs,immediate) ) & 0x000000FF );
 	value_to_be_stored = alu_extend( value_to_be_stored, 8, 32 );
 	set_regs( ioperand.rt, value_to_be_stored );
 }
 static void emu_lbu(void){
 	u32 rs = get_regs( ioperand.rs );
 	u32 immediate = alu_extend( ioperand.immediate, 16, 32 );
-	u32 value_to_be_stored = ( get_dMemory( rs+immediate ) & 0x000000FF );
+	u32 value_to_be_stored = ( get_dMemory( alu_add(rs,immediate) ) & 0x000000FF );
 	set_regs( ioperand.rt, value_to_be_stored );
 }
 static void emu_sw(void){
 	u32 rs = get_regs( ioperand.rs );
 	u32 immediate = alu_extend( ioperand.immediate, 16, 32 );
 	u32 value_to_be_stored = get_regs( ioperand.rt );
-	set_dMemory( rs+immediate , value_to_be_stored );
+	u32 address = alu_add(rs,immediate);
+	if( address%4!=0 ){
+		error_report( ERROR_data_misaligned );
+	}
+	set_dMemory( address , value_to_be_stored );
 }
 static void emu_sh(void){
 	u32 rs = get_regs( ioperand.rs );
 	u32 immediate = alu_extend( ioperand.immediate, 16, 32 );
 	u32 value_to_be_stored = ( get_regs( ioperand.rt ) & 0x0000FFFF ) + ( get_dMemory( rs+immediate ) & 0xFFFF0000 );
-	set_dMemory( rs+immediate , value_to_be_stored );
+	set_dMemory( alu_add(rs,immediate) , value_to_be_stored );
 }
 static void emu_sb(void){
 	u32 rs = get_regs( ioperand.rs );
 	u32 immediate = alu_extend( ioperand.immediate, 16, 32 );
 	u32 value_to_be_stored = ( get_regs( ioperand.rt ) & 0x000000FF ) + ( get_dMemory( rs+immediate ) & 0xFFFFFF00 );
-	set_dMemory( rs+immediate , value_to_be_stored );
+	u32 address = alu_add(rs,immediate);
+	if( address%2!=0 ){
+		error_report( ERROR_data_misaligned );
+	}
+	set_dMemory( address , value_to_be_stored );
 }
 static void emu_lui(void){
 	u32 value_to_be_stored = ( ioperand.immediate<<16 );
@@ -135,53 +156,40 @@ static void i_decoder( u32 instr ){
 	ioperand.immediate = ( instr & 0xFFFF );
 
 	if( op==OP_addi ){
-printf("---------------------------------addi\n");
 		emu_addi();
 	}else if( op==OP_lw ){
-printf("---------------------------------lw\n");
 		emu_lw();
 	}else if( op==OP_lh ){
-printf("---------------------------------lh\n");
 		emu_lh();
 	}else if( op==OP_lhu ){
-printf("---------------------------------lhu\n");
 		emu_lhu();
 	}else if( op==OP_lb ){
-printf("---------------------------------lb\n");
 		emu_lb();
 	}else if( op==OP_lbu ){
-printf("---------------------------------lbu\n");
 		emu_lbu();
 	}else if( op==OP_sw ){
-printf("---------------------------------sw\n");
 		emu_sw();
 	}else if( op==OP_sh ){
-printf("---------------------------------sh\n");
 		emu_sh();
 	}else if( op==OP_sb ){
-printf("---------------------------------sb\n");
 		emu_sb();
 	}else if( op==OP_lui ){
-printf("---------------------------------lui\n");
 		emu_lui();
 	}else if( op==OP_andi ){
-printf("---------------------------------andi\n");
 		emu_andi();
 	}else if( op==OP_ori ){
-printf("---------------------------------ori\n");
 		emu_ori();
 	}else if( op==OP_nori ){
-printf("---------------------------------nori\n");
 		emu_nori();
 	}else if( op==OP_slti ){
-printf("---------------------------------slti\n");
 		emu_slti();
 	}else if( op==OP_beq ){
-printf("---------------------------------beq\n");
 		emu_beq();
 	}else if( op==OP_bne ){
-printf("---------------------------------bne\n");
 		emu_bne();
-	}
+	}else{
+		printf("Undefine opcode!\n");
+		printf("insrtuction : 0x08X\n", instr);
+    }
 }
 #endif
