@@ -1,0 +1,1 @@
+請將測資 dimage.bin, iimage.bin, snapshot.rpt 放置於此資料夾

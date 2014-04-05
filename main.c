@@ -7,9 +7,7 @@
 /******************************************************************************/
 #include <stdio.h>
 #include <string.h>
-#include ".\libs\dmemory.h"
-#include ".\libs\imemory.h"
-#include ".\libs\vcpu.h"
+#include ".\libs\processor.h"
 
 /******************************************************************************/
 /*int main()                                                                  */
@@ -26,14 +24,9 @@ int main(int argc, char const *argv[])
 	load_iMemory();
 
 	/*process*/
-	/*
-	u32 instr;
-	u32 op;
-	...
-	*/
+	process();
 
 	/*Output*/
-	print_regs();
 	print_dMemory();
 	print_iMemory();
 

@@ -1,20 +1,34 @@
+#ifndef __DMEMORY_H
+#define __DMEMORY_H
+
+#include ".\vcpu.h"
+#define PATH_dimage ".\\input\\dimage.bin"
+
 typedef unsigned int u32;
 u32 dMemory[1024];
+u32 dNum;
 
-static void load_dMemory(void);
-static void print_dMemory(void);
-
-/******************************************************************************/
-/*initialize                                                                  */
-/******************************************************************************/
 static void initialize_dMemory(void){
 	memset(dMemory, 0, sizeof(dMemory));
 }
-/******************************************************************************/
-/*INPUT                                                                      */
-/******************************************************************************/
 static void load_dMemory(void){
-	FILE* fin = fopen(".\\input\\dimage.bin", "rb");
+	FILE* fin = fopen(PATH_dimage, "rb");
+	/*
+	The first four bytes of dimage shows the initial value of $sp.
+	*/
+	if( !feof(fin) )
+	{
+		fread(&$sp, sizeof(u32), 1, fin);
+	}
+	/*
+	The next four bytes specify the number of words to be loaded into D memory.
+	*/
+	if( !feof(fin) ){
+		fread(&dNum, sizeof(u32), 1, fin);
+	}
+	/*
+	Start load data into D memory.
+	*/
 	int i = 0;
 	while( !feof(fin) )
 	{
@@ -22,11 +36,27 @@ static void load_dMemory(void){
 	}
 	fclose(fin);
 }
-/******************************************************************************/
-/*OUTPUT                                                                      */
-/******************************************************************************/
-static void print_dMemory(void)
-{
+static u32 get_dMemory(int index){
+	u32 data = 0;
+	int i;
+	for(i=index+3; i>=index; i--){
+		if( 0<=i && i<1024 ){
+			data = (data<<8);
+			data += dMemory[i];
+		}
+	}
+	return data;
+}
+static void set_dMemory(int index, u32 value){
+	int i;
+	for(i=index; i<=index+3; i++){
+		if( 0<=i && i<1024 ){
+			dMemory[i] = (value&0x000000FF) ;
+			value = ( value>>8 );
+		}
+	}
+}
+static void print_dMemory(void){
 	FILE* fout = fopen("Out_dMemory.txt", "w");
 	/*
 	...
@@ -37,3 +67,5 @@ static void print_dMemory(void)
 	}
 	fclose(fout);
 }
+
+#endif

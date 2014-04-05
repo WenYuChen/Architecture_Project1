@@ -1,0 +1,6 @@
+將該筆測資的 snapshot.rpt(助教提供的正確答案) 放於input資料夾內，
+將該筆測資的 Out_register.txt(執行結果) 放於上一層資料夾，
+執行 compare_ans.exe
+即可從 Out_compare.txt 看到測資比較結果
+可知道哪個cycle出錯
+並可看見出錯的register內容
